@@ -7,16 +7,19 @@ export const getCurrentPrSize = async () => {
   const { data } = await octokit.rest.pulls.listFiles({
     ...github.context.repo,
     pull_number: github.context.issue.number,
+    per_page: 100
   });
 
-  const excludedPatterns = getMultilineInput('excluded_files');
+  const excludedPatterns = getMultilineInput('excluded_files').map(v=> v.split('\\n')).flat().map(v=> v.trim());
+  info(`excludedPatterns: ${JSON.stringify(excludedPatterns, null, 2)}`);
 
+
+  info(`line summary: '총 변경라인' | '이 파일에서 변경된 라인 수' | 'ignore 파일인지?' | '경로포함한 파일이름'`);
   const lines = data.reduce((acc, file) => {
-    if (excludedPatterns && excludedPatterns.some((pattern) => file.filename.match(pattern.trim()))) {
-      return acc;
-    }
-
-    return acc + file.changes;
+    const isMatch = excludedPatterns && excludedPatterns.some((pattern) => file.filename.match(pattern));
+    const sum = isMatch ? acc : acc + file.changes;
+    info(`line summary: ${sum.toString(10).padStart(4, '0')} | ${(sum - acc).toString(10).padStart(4, '0')} | ${String(isMatch).padStart(5, ' ')} | ${file.filename}`);
+    return sum;
   }, 0);
 
   info(`Lines changed: ${lines}`);

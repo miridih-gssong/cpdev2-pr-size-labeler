@@ -45,13 +45,15 @@ const github = __importStar(__nccwpck_require__(5438));
 const core_1 = __nccwpck_require__(2186);
 const pr_sizes_1 = __nccwpck_require__(9038);
 const getCurrentPrSize = () => __awaiter(void 0, void 0, void 0, function* () {
-    const { data } = yield octokit_1.octokit.rest.pulls.listFiles(Object.assign(Object.assign({}, github.context.repo), { pull_number: github.context.issue.number }));
-    const excludedPatterns = (0, core_1.getMultilineInput)('excluded_files');
+    const { data } = yield octokit_1.octokit.rest.pulls.listFiles(Object.assign(Object.assign({}, github.context.repo), { pull_number: github.context.issue.number, per_page: 100 }));
+    const excludedPatterns = (0, core_1.getMultilineInput)('excluded_files').map(v => v.split('\\n')).flat().map(v => v.trim());
+    (0, core_1.info)(`excludedPatterns: ${JSON.stringify(excludedPatterns, null, 2)}`);
+    (0, core_1.info)(`line summary: '총 변경라인' | '이 파일에서 변경된 라인 수' | 'ignore 파일인지?' | '경로포함한 파일이름'`);
     const lines = data.reduce((acc, file) => {
-        if (excludedPatterns && excludedPatterns.some((pattern) => file.filename.match(pattern.trim()))) {
-            return acc;
-        }
-        return acc + file.changes;
+        const isMatch = excludedPatterns && excludedPatterns.some((pattern) => file.filename.match(pattern));
+        const sum = isMatch ? acc : acc + file.changes;
+        (0, core_1.info)(`line summary: ${sum.toString(10).padStart(4, '0')} | ${(sum - acc).toString(10).padStart(4, '0')} | ${String(isMatch).padStart(5, ' ')} | ${file.filename}`);
+        return sum;
     }, 0);
     (0, core_1.info)(`Lines changed: ${lines}`);
     const prSizes = (0, pr_sizes_1.getPrSizeInputs)();
