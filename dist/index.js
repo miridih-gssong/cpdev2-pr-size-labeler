@@ -121,8 +121,10 @@ function run() {
             core.info(`Labels found: ${existingLabels.join()}`);
             if (currentPrSize.label === prSizes[pr_sizes_1.Size.XL].label) {
                 const messageXl = core.getInput('message_if_xl');
-                yield octokit_1.octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: github.context.issue.number, body: messageXl }));
-                if (core.getInput('fail_if_xl')) {
+                const failIfXl = core.getInput('fail_if_xl');
+                console.log("-> failIfXl", failIfXl);
+                if (failIfXl === 'true') {
+                    yield octokit_1.octokit.rest.issues.createComment(Object.assign(Object.assign({}, github.context.repo), { issue_number: github.context.issue.number, body: messageXl }));
                     core.setFailed(messageXl);
                 }
             }

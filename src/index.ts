@@ -23,14 +23,16 @@ async function run() {
 
     if (currentPrSize.label === prSizes[Size.XL].label) {
       const messageXl = core.getInput('message_if_xl');
+      const failIfXl = core.getInput('fail_if_xl');
+      console.log("-> failIfXl", failIfXl);
 
-      await octokit.rest.issues.createComment({
-        ...github.context.repo,
-        issue_number: github.context.issue.number,
-        body: messageXl,
-      });
+      if (failIfXl === 'true') {
+        await octokit.rest.issues.createComment({
+          ...github.context.repo,
+          issue_number: github.context.issue.number,
+          body: messageXl,
+        });
 
-      if (core.getInput('fail_if_xl')) {
         core.setFailed(messageXl);
       }
     }
